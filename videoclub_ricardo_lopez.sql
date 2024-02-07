@@ -6,7 +6,7 @@ create table socio(
 	id serial primary key,
 	nombre varchar(30) not null,
 	apellidos varchar(30) not null,
-	telefono int not null,
+	telefono varchar not null,
 	dni varchar(12) not null
 );
 
@@ -22,11 +22,13 @@ create table prestamo(
 	id serial primary key,
 	fecha_prestamo date not null,
 	fecha_devolucion date,
-	socio_id int not null
+	socio_id int not null,
+	copia_id int not null
 );
 
 create table pelicula(
 	id serial primary key,
+	id_copia int not null,
 	titulo varchar(150) not null,
 	sinopsis varchar(1000) not null
 );
@@ -34,7 +36,7 @@ create table pelicula(
 create table prestamo_pelicula(
 	id serial primary key,
 	pelicula_id int not null,
-	prestamo_id int not null
+	socio int not null
 );
 
 create table genero(
@@ -53,36 +55,25 @@ create table director(
 );
 
 create table inventario(
-	id int primary key,
-	copias int not null
+	id serial primary key,
+	copias int not null,
+	prestamo_id int
 );
 
+alter table prestamo
+add constraint fk_socio_prestamo
+foreign key (socio_id)
+references socio(id);
 
-alter table prestamo_pelicula
-add constraint fk_prestamo_prestamo_pelicula
-foreign key (prestamo_id)
-references prestamo(id);
-
-alter table prestamo_pelicula
-add constraint fk_pelicula_prestamo_pelicula
-foreign key (pelicula_id)
+alter table prestamo
+add constraint fk_pelicula_prestamo
+foreign key (copia_id)
 references pelicula(id);
 
-/*alter table pelicula
-add constraint fk_genero_pelicula
-foreign key (genero_id)
-references genero(id);
-
-alter table pelicula 
-add constraint fk_fecha_publicacion_pelicula
-foreign key (fecha_publicacion_id)
-references fecha_publicacion(id);
-
-alter table pelicula
-add constraint fk_director_pelicula
-foreign key (director_id)
-references director(id);*/
-
+alter table inventario
+add constraint fk_prestamo_inventario
+foreign key (prestamo_id)
+references prestamo(id);
 
 
 /*
@@ -631,8 +622,6 @@ INSERT INTO tmp_videoclub (id_copia,fecha_alquiler_texto,dni,nombre,apellido_1,a
 	 (306,'2024-01-07','6810904Y','Hugo','Torres','Ferrer','hugo.torres.ferrer@gmail.com','649016903','47006','1994-06-05','50','1','Der.','Federico García Lorca','1Der.','La doncella','Thriller','Corea, década de 1930, durante la colonización japonesa. Una joven llamada Sookee es contratada como doncella de una rica mujer japonesa, Hideko, que vive recluida en una gran mansión bajo la influencia de un tirano. Sookee guarda un secreto y con la ayuda de un estafador que se hace pasar por un conde japonés, planea algo para Hideko.','Park Chan-wook','2024-01-07','2024-01-08'),
 	 (308,'2024-01-25','1638778M','Angel','Lorenzo','Caballero','angel.lorenzo.caballero@gmail.com','698073069','47008','2011-07-30','82','1','Izq.','Sol','1Izq.','El bazar de las sorpresas','Comedia','Alfred Kralik es el tímido jefe de vendedores de Matuschek y Compañía, una tienda de Budapest. Todas las mañanas, los empleados esperan juntos la llegada de su jefe, Hugo Matuschek. A pesar de su timidez, Alfred responde al anuncio de un periódico y mantiene un romance por carta. Su jefe decide contratar a una tal Klara Novak en contra de la opinión de Alfred. En el trabajo, Alfred discute constantemente con ella, sin sospechar que es su corresponsal secreta.','Ernst Lubitsch','2024-01-25',NULL);
 
-
-	
 	
 /*
  * Change name and type column fecha_alqulir_texto too fecha_publicacion and create ramdom date
@@ -650,23 +639,12 @@ set fecha_publicacion  = to_char(
     'yyyy-mm-dd'
 );
 
-/*
+/*************************************
  * Inser dsts from tmp_videoclub table
- */
+ *************************************/
+insert into pelicula (id_copia, titulo, sinopsis)
+select distinct tv.id_copia, tv.titulo, tv.sinopsis from tmp_videoclub tv;
 
-/*insert into genero (genero)
-select distinct genero from tmp_videoclub tv;
-
-
-insert into director (director)
-select distinct director from tmp_videoclub tv; 
-
-insert into fecha_publicacion (fecha)
-select distinct fecha_publicacion from tmp_videoclub tv;*/
-
-
-insert into pelicula (titulo, sinopsis)
-select distinct tv.titulo, tv.sinopsis from tmp_videoclub tv;
 
 insert into genero (id, genero)
 select distinct p.id, tv.genero
@@ -678,66 +656,60 @@ select distinct p.id, tv.director
 from tmp_videoclub tv 
 inner join pelicula p on tv.titulo = p.titulo;
 
-insert into inventario (id, copias)
-select distinct p.id, count (cast(tv.id_copia as integer))
-from tmp_videoclub tv 
-inner join pelicula p on tv.titulo = p.titulo
-group by p.id;
-
-
-/*select * from genero g ;
-select * from pelicula p;
-select * from tmp_videoclub tv;
-select * from director d;
-select * from inventario;
-
-select g.genero from genero g where g.id = 15;
-select p.titulo from pelicula p where p.id = 15; 
-select tv.genero from tmp_videoclub tv where tv.titulo = 'Whiplash';
-
-select d.director from director d where d.id = 67;
-select p.titulo from pelicula p where p.id = 67; 
-select tv.director from tmp_videoclub tv where tv.titulo = 'Forrest Gump';
-
-select tv.id_copia, tv.nombre, tv.titulo, tv.fecha_alquiler, tv.fecha_devolucion  from tmp_videoclub tv where tv.titulo = 'Interstellar';
-select tv.id_copia, tv.nombre, tv.titulo, tv.fecha_alquiler, tv.fecha_devolucion from tmp_videoclub tv where tv.titulo = 'El bueno, el feo y el malo';
-select * from tmp_videoclub tv;*/
-
-/*insert into telefono (dni, telefono)
-select distinct tp.dni, tp.telefono from tmp_personas tp;*/
-
-/*insert into poblacion (nombre, id_provincia)
-select distinct tp.poblacion, p.id from tmp_personas tp inner join provincia p on tp.provincia = p.nombre;*/
-
-/* Insert socios */
 insert into socio (nombre, apellidos, telefono, dni)
 select distinct tv.nombre, concat(tv.apellido_1, ' ', tv.apellido_2) apellidos, cast (tv.telefono as integer), tv.dni
 from tmp_videoclub tv;
 
 
-/* insert direccion */
 insert into direccion (id, cp, calle, numero, piso)
 select distinct s.id, tv.codigo_postal, tv.calle, tv.numero, tv.ext
 from tmp_videoclub tv
 inner join socio s on s.dni = tv.dni;
 
-insert into prestamo (fecha_prestamo, fecha_devolucion, socio_id)
-select distinct tv.fecha_alquiler, tv.fecha_devolucion, s.id
+insert into prestamo (fecha_prestamo, fecha_devolucion, socio_id, copia_id)
+select distinct tv.fecha_alquiler, tv.fecha_devolucion, s.id, tv.id_copia
 from tmp_videoclub tv
 inner join socio s on s.dni = tv.dni;
 
-select * from tmp_videoclub tv;
-select * from prestamo p;
-select * from socio s;
-select * from tmp_videoclub where dni = '4437589S';
+insert into inventario (copias, prestamo_id)
+select COUNT(CAST(tv.id_copia AS integer)), pres.id
+FROM tmp_videoclub tv 
+INNER JOIN prestamo pres ON pres.copia_id = tv.id_copia
+GROUP BY pres.id , pres.copia_id;
 
-/*select distinct pel.id, pres.id
-from pelicula pel
-inner join prestamo pres on pres.socio_id = pel.*/
+/*
+ * Query 1 -> Que películas están disponibles para alquilar en este momento (no están
+prestadas). Necesito el título y el número de copias disponibles
+ */
 
--- INSERT INTO prestamo_pelicula (pelicula_id, prestamo_id) 
--- select  p.id, pr.id FROM pelicula p, prestamo pr order by p.id
+select distinct pel.id_copia, pel.titulo, (inv.copias - COUNT(CASE WHEN pr.fecha_devolucion IS NULL THEN 1 END)) as copias_disponibles, inv.copias as total_copias
+from prestamo pr
+inner join pelicula pel on pel.id_copia = pr.copia_id
+inner join inventario inv on inv.prestamo_id = pr.id
+group by pel.id_copia, pel.titulo, inv.copias;
 
+/*
+Query 2 -> Cual es el género favorito de cada uno de mis socios para poder recomendarle
+películas cuando venga. Necesito el número de socio, nombre y género favorito
+*/
+
+create table aux_genero as 
+select s.id as num_socio, concat(s.nombre, ' ', s.apellidos) as socio, p.copia_id, pel.titulo, g.genero
+from socio s
+inner join prestamo p on s.id = p.socio_id
+inner join pelicula pel on pel.id_copia = p.copia_id
+inner join genero g on pel.id = g.id
+group by s.id, s.nombre, p.copia_id, pel.titulo, g.genero
+order by s.id;
+
+
+select num_socio, socio, genero
+from (
+  select num_socio, socio, genero, row_number() over (partition by num_socio order by count(*) desc) as row_num
+  from aux_genero
+  group by num_socio, socio, genero
+) subquery
+where row_num = 1;
 
 
 
