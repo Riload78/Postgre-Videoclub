@@ -11,7 +11,7 @@ create table socio(
 );
 
 create table direccion(
-	id serial primary key,
+	id_socio int not null,
 	cp varchar(5),
 	calle varchar(50),
 	numero varchar(10),
@@ -28,52 +28,88 @@ create table prestamo(
 
 create table pelicula(
 	id serial primary key,
-	id_copia int not null,
 	titulo varchar(150) not null,
-	sinopsis varchar(1000) not null
-);
-
-create table prestamo_pelicula(
-	id serial primary key,
-	pelicula_id int not null,
-	socio int not null
+	sinopsis varchar(1000) not null,
+	director_id int not null,
+	genero_id int not null,
+	fecha text not null
 );
 
 create table genero(
-	id int primary key,
+	id serial primary key,
 	genero varchar(20) not null
 );
 
+/*
 create table fecha_publicacion(
 	id int primary key,
 	fecha text not null
 );
+*/
 
 create table director(
-	id int primary key,
+	id serial primary key,
 	director varchar(20) not null
 );
 
 create table inventario(
-	id serial primary key,
-	copias int not null,
-	prestamo_id int
+	id_copia int primary key,
+	pelicula_id int not null
 );
 
+/*
+ * alter Prestamo
+ */
 alter table prestamo
 add constraint fk_socio_prestamo
 foreign key (socio_id)
 references socio(id);
 
 alter table prestamo
-add constraint fk_pelicula_prestamo
+add constraint fk_inventario_prestamo
 foreign key (copia_id)
+references inventario(id_copia);
+
+/*
+ * alter Inventario
+ */
+alter table inventario
+add constraint fk_pelicula_inventario
+foreign key (pelicula_id)
 references pelicula(id);
 
-alter table inventario
-add constraint fk_prestamo_inventario
-foreign key (prestamo_id)
-references prestamo(id);
+
+/*
+ * alter direccion
+ */
+alter table direccion
+add constraint fk_socio_direccion
+foreign key (id_socio)
+references socio(id);
+
+
+/*
+ * alter pelicula
+ */
+alter table pelicula
+add constraint fk_genero_pelicula
+foreign key (genero_id)
+references genero(id);
+
+alter table pelicula
+add constraint fk_director_pelicula
+foreign key (director_id)
+references director(id);
+
+
+
+alter table pelicula add constraint unique_pelicula_genero_director unique (titulo, director_id, genero_id);
+alter table socio add constraint unique_dni unique (dni);
+alter table director add constraint unique_nombre_director unique (director);
+alter table genero add constraint unique_valor_genero unique (genero);
+
+
+
 
 
 /*
@@ -103,7 +139,7 @@ CREATE TABLE tmp_videoclub (
 	fecha_alquiler date NULL,
 	fecha_devolucion date NULL
 );
-INSERT INTO tmp_videoclub (id_copia,fecha_alquiler_texto,dni,nombre,apellido_1,apellido_2,email,telefono,codigo_postal,fecha_nacimiento,numero,piso,letra,calle,ext,titulo,genero,sinopsis,director,fecha_alquiler,fecha_devolucion) VALUES
+insert into tmp_videoclub (id_copia,fecha_alquiler_texto,dni,nombre,apellido_1,apellido_2,email,telefono,codigo_postal,fecha_nacimiento,numero,piso,letra,calle,ext,titulo,genero,sinopsis,director,fecha_alquiler,fecha_devolucion) VALUES
 	 (3,'2024-01-28','1124603H','Ivan','Santana','Medina','ivan.santana.medina@gmail.com','694804631','47007','2005-02-15','6','3','D','Francisco Pizarro','3D','El padrino','Drama','Don Vito Corleone, conocido dentro de los círculos del hampa como ''El Padrino'', es el patriarca de una de las cinco familias que ejercen el mando de la Cosa Nostra en Nueva York en los años cuarenta. Don Corleone tiene cuatro hijos: una chica, Connie, y tres varones; Sonny, Michael y Fredo. Cuando el Padrino reclina intervenir en el negocio de estupefacientes, empieza una cruenta lucha de violentos episodios entre las distintas familias del crimen organizado.','Francis Ford Coppola','2024-01-28',NULL),
 	 (4,'2024-01-30','1396452F','Maria carmen','Crespo','Reyes','maria carmen.crespo.reyes@gmail.com','607425989','47005','2000-11-17','58','1','A','Francisco de Goya','1A','El padrino','Drama','Don Vito Corleone, conocido dentro de los círculos del hampa como ''El Padrino'', es el patriarca de una de las cinco familias que ejercen el mando de la Cosa Nostra en Nueva York en los años cuarenta. Don Corleone tiene cuatro hijos: una chica, Connie, y tres varones; Sonny, Michael y Fredo. Cuando el Padrino reclina intervenir en el negocio de estupefacientes, empieza una cruenta lucha de violentos episodios entre las distintas familias del crimen organizado.','Francis Ford Coppola','2024-01-30','2024-01-31'),
 	 (4,'2024-02-01','6162443F','Rodrigo','Muñoz','Muñoz','rodrigo.muñoz.muñoz@gmail.com','607661550','47001','2006-10-23','51','1','A','Antonio Machado','1A','El padrino','Drama','Don Vito Corleone, conocido dentro de los círculos del hampa como ''El Padrino'', es el patriarca de una de las cinco familias que ejercen el mando de la Cosa Nostra en Nueva York en los años cuarenta. Don Corleone tiene cuatro hijos: una chica, Connie, y tres varones; Sonny, Michael y Fredo. Cuando el Padrino reclina intervenir en el negocio de estupefacientes, empieza una cruenta lucha de violentos episodios entre las distintas familias del crimen organizado.','Francis Ford Coppola','2024-02-01',NULL),
@@ -204,7 +240,7 @@ INSERT INTO tmp_videoclub (id_copia,fecha_alquiler_texto,dni,nombre,apellido_1,a
 	 (61,'2024-01-07','1124603H','Ivan','Santana','Medina','ivan.santana.medina@gmail.com','694804631','47007','2005-02-15','6','3','D','Francisco Pizarro','3D','Cinema Paradiso','Drama','En un pequeño pueblo siciliano durante los años previos a la llegada de la televisión (justo al finalizar la Segunda Guerra Mundial) el joven Toto vivía fascinado por el cine. Toto trata de entablar amistad con Alfredo, el proyeccionista del cine local, una persona muy irritable pero con un gran corazón. Todos estos hechos se presentan en forma de nostálgicos recuerdos de Toto que ha crecido hasta convertirse en un cineasta de éxito, y que revive a su infancia cuando recibe la noticia de que Alfredo ha muerto.','Giuseppe Tornatore','2024-01-07','2024-01-08'),
 	 (61,'2024-01-28','2237186E','Eduardo','Alonso','Castro','eduardo.alonso.castro@gmail.com','684839436','47007','1999-07-25','12','1','D','Reina Sofía','1D','Cinema Paradiso','Drama','En un pequeño pueblo siciliano durante los años previos a la llegada de la televisión (justo al finalizar la Segunda Guerra Mundial) el joven Toto vivía fascinado por el cine. Toto trata de entablar amistad con Alfredo, el proyeccionista del cine local, una persona muy irritable pero con un gran corazón. Todos estos hechos se presentan en forma de nostálgicos recuerdos de Toto que ha crecido hasta convertirse en un cineasta de éxito, y que revive a su infancia cuando recibe la noticia de que Alfredo ha muerto.','Giuseppe Tornatore','2024-01-28',NULL),
 	 (62,'2024-01-24','6298662C','Angela','Lopez','Rubio','angela.lopez.rubio@gmail.com','628535856','47001','1992-06-26','37','3','Der.','Real','3Der.','Taylor Swift: Gira de estadios Reputation','Musical','Taylor Swift se sube al escenario en Dallas durante su Reputation Stadium Tour y festeja una gran noche de música, recuerdos y magia visual.','Paul Dugdale','2024-01-24','2024-01-25');
-INSERT INTO tmp_videoclub (id_copia,fecha_alquiler_texto,dni,nombre,apellido_1,apellido_2,email,telefono,codigo_postal,fecha_nacimiento,numero,piso,letra,calle,ext,titulo,genero,sinopsis,director,fecha_alquiler,fecha_devolucion) VALUES
+insert into tmp_videoclub (id_copia,fecha_alquiler_texto,dni,nombre,apellido_1,apellido_2,email,telefono,codigo_postal,fecha_nacimiento,numero,piso,letra,calle,ext,titulo,genero,sinopsis,director,fecha_alquiler,fecha_devolucion) VALUES
 	 (62,'2024-01-31','8568516G','Carla','Rojas','Pastor','carla.rojas.pastor@gmail.com','613713642','47008','1990-10-12','65','3','D','Hernán Cortés','3D','Taylor Swift: Gira de estadios Reputation','Musical','Taylor Swift se sube al escenario en Dallas durante su Reputation Stadium Tour y festeja una gran noche de música, recuerdos y magia visual.','Paul Dugdale','2024-01-31',NULL),
 	 (64,'2024-02-02','8597459J','Jaime','Cruz','Calvo','jaime.cruz.calvo@gmail.com','617112942','47003','2005-01-05','87','4','Izq.','Iglesia','4Izq.','El club de la lucha','Drama','Un joven sin ilusiones lucha contra su insomnio, consecuencia quizás de su hastío por su gris y rutinaria vida. En un viaje en avión conoce a Tyler Durden, un carismático vendedor de jabón que sostiene una filosofía muy particular: el perfeccionismo es cosa de gentes débiles; en cambio, la autodestrucción es lo único que hace que realmente la vida merezca la pena. Ambos deciden entonces formar un club secreto de lucha donde descargar sus frustaciones y su ira que tendrá un éxito arrollador.','David Fincher','2024-02-02',NULL),
 	 (65,'2024-01-15','4426152D','Adrian','Gil','Fernandez','adrian.gil.fernandez@gmail.com','675655492','47002','1995-03-21','64','4','A','Francisco de Goya','4A','El club de la lucha','Drama','Un joven sin ilusiones lucha contra su insomnio, consecuencia quizás de su hastío por su gris y rutinaria vida. En un viaje en avión conoce a Tyler Durden, un carismático vendedor de jabón que sostiene una filosofía muy particular: el perfeccionismo es cosa de gentes débiles; en cambio, la autodestrucción es lo único que hace que realmente la vida merezca la pena. Ambos deciden entonces formar un club secreto de lucha donde descargar sus frustaciones y su ira que tendrá un éxito arrollador.','David Fincher','2024-01-15',NULL),
@@ -305,7 +341,7 @@ INSERT INTO tmp_videoclub (id_copia,fecha_alquiler_texto,dni,nombre,apellido_1,a
 	 (125,'2024-01-27','1396452F','Maria carmen','Crespo','Reyes','maria carmen.crespo.reyes@gmail.com','607425989','47005','2000-11-17','58','1','A','Francisco de Goya','1A','A Silent Voice','Animación','La historia gira en torno a Shōko Nishimiya, una estudiante de primaria que es sorda de nacimiento y que al cambiarse de colegio comienza a recibir acoso escolar por parte de sus nuevos compañeros. Uno de los principales responsables es Shōya Ishida quien termina por forzar que Nishimiya se cambie de escuela. Como resultado de los actos contra Shoko las autoridades del colegio toman cartas en el asunto y el curso señala como único responsable a Ishida, quien comienza a sentir el acoso impuesto por sus propios compañeros, al mismo tiempo que termina aislándose de los que alguna vez fueron sus amigos. Años después, Ishida intenta corregir su mal actuar, buscando la redención frente a Nishimiya.','Naoko Yamada','2024-01-27','2024-01-28'),
 	 (125,'2024-02-01','6152776T','Margarita','Nuñez','Fuentes','margarita.nuñez.fuentes@gmail.com','614215413','47007','1998-03-02','62','2','Izq.','Bartolomé Esteban Murillo','2Izq.','A Silent Voice','Animación','La historia gira en torno a Shōko Nishimiya, una estudiante de primaria que es sorda de nacimiento y que al cambiarse de colegio comienza a recibir acoso escolar por parte de sus nuevos compañeros. Uno de los principales responsables es Shōya Ishida quien termina por forzar que Nishimiya se cambie de escuela. Como resultado de los actos contra Shoko las autoridades del colegio toman cartas en el asunto y el curso señala como único responsable a Ishida, quien comienza a sentir el acoso impuesto por sus propios compañeros, al mismo tiempo que termina aislándose de los que alguna vez fueron sus amigos. Años después, Ishida intenta corregir su mal actuar, buscando la redención frente a Nishimiya.','Naoko Yamada','2024-02-01',NULL),
 	 (139,'2024-01-16','7386143S','Marta','Santiago','Rubio','marta.santiago.rubio@gmail.com','667115015','47006','2017-03-01','71','2','D','Mariana Pineda','2D','Spider-Man: Cruzando el Multiverso','Animación','Tras reencontrarse con Gwen Stacy, el amigable vecindario de Spider-Man de Brooklyn al completo es catapultado a través del Multiverso, donde se encuentra con un equipo de Spidermans encargados de proteger su propia existencia. Pero cuando los héroes se enfrentan sobre cómo manejar una nueva amenaza, Miles se encuentra enfrentado a las otras Arañas y debe redefinir lo que significa ser un héroe para poder salvar a la gente que más quiere.','Kemp Powers','2024-01-16',NULL);
-INSERT INTO tmp_videoclub (id_copia,fecha_alquiler_texto,dni,nombre,apellido_1,apellido_2,email,telefono,codigo_postal,fecha_nacimiento,numero,piso,letra,calle,ext,titulo,genero,sinopsis,director,fecha_alquiler,fecha_devolucion) VALUES
+insert into tmp_videoclub (id_copia,fecha_alquiler_texto,dni,nombre,apellido_1,apellido_2,email,telefono,codigo_postal,fecha_nacimiento,numero,piso,letra,calle,ext,titulo,genero,sinopsis,director,fecha_alquiler,fecha_devolucion) VALUES
 	 (126,'2024-01-24','2285124M','Jose ignacio','Rojas','Blanco','jose ignacio.rojas.blanco@gmail.com','604696806','47007','2010-11-06','57','4','A','Concepción Arenal','4A','El pianista','Drama','Varsovia, 1939. El pianista polaco de origen judío Wladyslaw Szpilman (Adrien Brody) interpreta un tema de Chopin en la radio nacional de Polonia mientras la aviación alemana bombardea la capital. El régimen nazi ha invadido el país, y como hace en otros países invadidos, lleva a cabo la misma política con respecto a los judíos. Así Szpilman y toda su familia -sus padres, su hermano y sus dos hermanas- se ven obligados a dejar su casa y todo lo que les pertenece para trasladarse con miles de personas de origen judío al ghetto de Varsovia. Mientras Wladyslaw trabaja como pianista en un restaurante propiedad de un judío que colabora con los nazis, su hermano Henryk (Ed Stoppard) prefiere luchar contra los nazis. Pero tres años más tarde, los habitantes del ghetto son trasladados en trenes hacia campos de concentración.','Roman Polanski','2024-01-24',NULL),
 	 (127,'2024-02-01','4500055J','Maria dolores','Gimenez','Hidalgo','maria dolores.gimenez.hidalgo@gmail.com','660071718','47007','2000-11-25','47','3','Izq.','María Zambrano','3Izq.','El pianista','Drama','Varsovia, 1939. El pianista polaco de origen judío Wladyslaw Szpilman (Adrien Brody) interpreta un tema de Chopin en la radio nacional de Polonia mientras la aviación alemana bombardea la capital. El régimen nazi ha invadido el país, y como hace en otros países invadidos, lleva a cabo la misma política con respecto a los judíos. Así Szpilman y toda su familia -sus padres, su hermano y sus dos hermanas- se ven obligados a dejar su casa y todo lo que les pertenece para trasladarse con miles de personas de origen judío al ghetto de Varsovia. Mientras Wladyslaw trabaja como pianista en un restaurante propiedad de un judío que colabora con los nazis, su hermano Henryk (Ed Stoppard) prefiere luchar contra los nazis. Pero tres años más tarde, los habitantes del ghetto son trasladados en trenes hacia campos de concentración.','Roman Polanski','2024-02-01',NULL),
 	 (148,'2024-02-02','2950461K','Maria rosa','Herrera','Nuñez','maria rosa.herrera.nuñez@gmail.com','674343471','47003','2003-07-24','76','3','D','Pablo Picasso','3D','La ventana indiscreta','Thriller','Un reportero fotográfico se ve obligado a permanecer en reposo con una pierna escayolada. A pesar de la compañía de su novia y de su enfermera, procura escapar al tedio, observando desde la ventana de su apartamento con unos prismáticos lo que ocurre en las viviendas de enfrente. Debido a una serie de extrañas circunstancias empieza a sospechar de un vecino cuya mujer ha desaparecido.','Alfred Hitchcock','2024-02-02',NULL),
@@ -406,7 +442,7 @@ INSERT INTO tmp_videoclub (id_copia,fecha_alquiler_texto,dni,nombre,apellido_1,a
 	 (185,'2024-01-23','4437589S','Pedro','Iglesias','Garrido','pedro.iglesias.garrido@gmail.com','634143203','47000','1999-12-02','34','1','B','Federico García Lorca','1B','Siempre nos quedará mañana','Comedia','Es primavera y toda la familia está alborotada por el inminente compromiso de la querida hija mayor, Marcella, quien, por su parte, sólo espera casarse rápidamente con un simpático chico de clase media, Giulio, y librarse por fin de esa incómoda familia.','Paola Cortellesi','2024-01-23','2024-01-24'),
 	 (185,'2024-01-25','7070649N','Albert','Cruz','Gomez','albert.cruz.gomez@gmail.com','632333185','47006','2015-02-23','3','3','C','Constitución','3C','Siempre nos quedará mañana','Comedia','Es primavera y toda la familia está alborotada por el inminente compromiso de la querida hija mayor, Marcella, quien, por su parte, sólo espera casarse rápidamente con un simpático chico de clase media, Giulio, y librarse por fin de esa incómoda familia.','Paola Cortellesi','2024-01-25','2024-01-26'),
 	 (186,'2024-01-07','8440344B','Nicolas','Marquez','Castro','nicolas.marquez.castro@gmail.com','655351776','47009','2014-11-23','95','2','C','Bartolomé Esteban Murillo','2C','Siempre nos quedará mañana','Comedia','Es primavera y toda la familia está alborotada por el inminente compromiso de la querida hija mayor, Marcella, quien, por su parte, sólo espera casarse rápidamente con un simpático chico de clase media, Giulio, y librarse por fin de esa incómoda familia.','Paola Cortellesi','2024-01-07','2024-01-08');
-INSERT INTO tmp_videoclub (id_copia,fecha_alquiler_texto,dni,nombre,apellido_1,apellido_2,email,telefono,codigo_postal,fecha_nacimiento,numero,piso,letra,calle,ext,titulo,genero,sinopsis,director,fecha_alquiler,fecha_devolucion) VALUES
+insert into tmp_videoclub (id_copia,fecha_alquiler_texto,dni,nombre,apellido_1,apellido_2,email,telefono,codigo_postal,fecha_nacimiento,numero,piso,letra,calle,ext,titulo,genero,sinopsis,director,fecha_alquiler,fecha_devolucion) VALUES
 	 (187,'2024-01-23','6938009J','Xavier','Caballero','Fuentes','xavier.caballero.fuentes@gmail.com','671280006','47004','2000-02-05','89','1','B','Iglesia','1B','Siempre nos quedará mañana','Comedia','Es primavera y toda la familia está alborotada por el inminente compromiso de la querida hija mayor, Marcella, quien, por su parte, sólo espera casarse rápidamente con un simpático chico de clase media, Giulio, y librarse por fin de esa incómoda familia.','Paola Cortellesi','2024-01-23','2024-01-24'),
 	 (187,'2024-01-27','7719170W','Aitor','Ibañez','Morales','aitor.ibañez.morales@gmail.com','683249365','47009','2002-02-04','49','1','Der.','María Zambrano','1Der.','Siempre nos quedará mañana','Comedia','Es primavera y toda la familia está alborotada por el inminente compromiso de la querida hija mayor, Marcella, quien, por su parte, sólo espera casarse rápidamente con un simpático chico de clase media, Giulio, y librarse por fin de esa incómoda familia.','Paola Cortellesi','2024-01-27','2024-01-28'),
 	 (187,'2024-01-30','5653366N','Maria nieves','Lozano','Leon','maria nieves.lozano.leon@gmail.com','680082585','47003','2002-01-06','21','2','Der.','Hernán Cortés','2Der.','Siempre nos quedará mañana','Comedia','Es primavera y toda la familia está alborotada por el inminente compromiso de la querida hija mayor, Marcella, quien, por su parte, sólo espera casarse rápidamente con un simpático chico de clase media, Giulio, y librarse por fin de esa incómoda familia.','Paola Cortellesi','2024-01-30','2024-01-31'),
@@ -507,7 +543,7 @@ INSERT INTO tmp_videoclub (id_copia,fecha_alquiler_texto,dni,nombre,apellido_1,a
 	 (247,'2024-01-10','6098616M','Javier','Dominguez','Lozano','javier.dominguez.lozano@gmail.com','616805343','47008','2010-11-03','42','2','Der.','María Zambrano','2Der.','¡Qué bello es vivir!','Drama','Es la vigilia de Navidad en Bedford falls, NY, y George Bailey está planeando suicidarse. Pero un ángel es enviado para detenerle en su intento. Él le enseñará a George las cosas maravillosas de su juventud, cómo salvó la vida de su hermano y la de otros que, gracias a haber conocido a George, son felices. Así, nuestro amigo descubrirá que... ¡La vida es realmente un tesoro maravilloso que debemos disfrutar!','Frank Capra','2024-01-10','2024-01-11'),
 	 (247,'2024-01-11','6693383S','Rodrigo','Mendez','Cruz','rodrigo.mendez.cruz@gmail.com','674794168','47008','2015-01-26','10','2','A','Reina Sofía','2A','¡Qué bello es vivir!','Drama','Es la vigilia de Navidad en Bedford falls, NY, y George Bailey está planeando suicidarse. Pero un ángel es enviado para detenerle en su intento. Él le enseñará a George las cosas maravillosas de su juventud, cómo salvó la vida de su hermano y la de otros que, gracias a haber conocido a George, son felices. Así, nuestro amigo descubrirá que... ¡La vida es realmente un tesoro maravilloso que debemos disfrutar!','Frank Capra','2024-01-11','2024-01-12'),
 	 (247,'2024-01-23','7402615L','Eva','Hidalgo','Cortes','eva.hidalgo.cortes@gmail.com','666238181','47003','2010-09-02','57','2','A','Fuente','2A','¡Qué bello es vivir!','Drama','Es la vigilia de Navidad en Bedford falls, NY, y George Bailey está planeando suicidarse. Pero un ángel es enviado para detenerle en su intento. Él le enseñará a George las cosas maravillosas de su juventud, cómo salvó la vida de su hermano y la de otros que, gracias a haber conocido a George, son felices. Así, nuestro amigo descubrirá que... ¡La vida es realmente un tesoro maravilloso que debemos disfrutar!','Frank Capra','2024-01-23',NULL);
-INSERT INTO tmp_videoclub (id_copia,fecha_alquiler_texto,dni,nombre,apellido_1,apellido_2,email,telefono,codigo_postal,fecha_nacimiento,numero,piso,letra,calle,ext,titulo,genero,sinopsis,director,fecha_alquiler,fecha_devolucion) VALUES
+insert into tmp_videoclub (id_copia,fecha_alquiler_texto,dni,nombre,apellido_1,apellido_2,email,telefono,codigo_postal,fecha_nacimiento,numero,piso,letra,calle,ext,titulo,genero,sinopsis,director,fecha_alquiler,fecha_devolucion) VALUES
 	 (248,'2024-01-23','3913881V','Maria pilar','Gallego','Moya','maria pilar.gallego.moya@gmail.com','611154361','47003','2015-03-22','86','3','B','Iglesia','3B','¡Qué bello es vivir!','Drama','Es la vigilia de Navidad en Bedford falls, NY, y George Bailey está planeando suicidarse. Pero un ángel es enviado para detenerle en su intento. Él le enseñará a George las cosas maravillosas de su juventud, cómo salvó la vida de su hermano y la de otros que, gracias a haber conocido a George, son felices. Así, nuestro amigo descubrirá que... ¡La vida es realmente un tesoro maravilloso que debemos disfrutar!','Frank Capra','2024-01-23',NULL),
 	 (249,'2024-01-28','9681358Z','Maria dolores','Flores','Iglesias','maria dolores.flores.iglesias@gmail.com','611914952','47003','2016-08-20','99','1','C','Dolores Ibárruri','1C','¡Qué bello es vivir!','Drama','Es la vigilia de Navidad en Bedford falls, NY, y George Bailey está planeando suicidarse. Pero un ángel es enviado para detenerle en su intento. Él le enseñará a George las cosas maravillosas de su juventud, cómo salvó la vida de su hermano y la de otros que, gracias a haber conocido a George, son felices. Así, nuestro amigo descubrirá que... ¡La vida es realmente un tesoro maravilloso que debemos disfrutar!','Frank Capra','2024-01-28',NULL),
 	 (250,'2024-01-09','2950461K','Maria rosa','Herrera','Nuñez','maria rosa.herrera.nuñez@gmail.com','674343471','47003','2003-07-24','76','3','D','Pablo Picasso','3D','Given: The Movie','Animación','Después de la emisión del episodio final de la adaptación de anime de Given, la cuenta oficial de Twitter anunció que se lanzará una adaptación de largometraje en 2020, retomando directamente donde se detuvo la serie de televisión.  La historia se centra en Ritsuka, un guitarrista que ha perdido el interés por tocar. Un día, conoce a Mafuyu, que tiene una guitarra rota, y Ritsuka de mala gana comienza a enseñarle a Mafuyu a tocar la guitarra, pero cuando escucha la voz de Mafuyu, las cosas comienzan a cambiar de repente para Ritsuka.','Hikaru Yamaguchi','2024-01-09',NULL),
@@ -608,7 +644,7 @@ INSERT INTO tmp_videoclub (id_copia,fecha_alquiler_texto,dni,nombre,apellido_1,a
 	 (111,'2024-01-27','6693383S','Rodrigo','Mendez','Cruz','rodrigo.mendez.cruz@gmail.com','674794168','47008','2015-01-26','10','2','A','Reina Sofía','2A','So Won','Drama','Una niña llamada So Won se convierte en víctima de la violencia. Su familia pasa por la desesperación y el dolor al intentar abrir otra puerta en su vida.','Lee Joon-ik','2024-01-27','2024-01-28'),
 	 (244,'2024-01-07','5653366N','Maria nieves','Lozano','Leon','maria nieves.lozano.leon@gmail.com','680082585','47003','2002-01-06','21','2','Der.','Hernán Cortés','2Der.','Milagro en la celda 7','Drama','Un hombre con discapacidad intelectual es injustamente encarcelado por la muerte de una niña, y debe demostrar su inocencia para poder estar de nuevo con su hija.','Mehmet Ada Öztekin','2024-01-07',NULL),
 	 (182,'2024-01-03','6693383S','Rodrigo','Mendez','Cruz','rodrigo.mendez.cruz@gmail.com','674794168','47008','2015-01-26','10','2','A','Reina Sofía','2A','Regreso al futuro','Aventura','Marty McFly, un estudiante de secundaria de 17 años, es enviado accidentalmente treinta años al pasado en un DeLorean que viaja en el tiempo, inventado por su gran amigo, el excéntrico científico Doc Brown.','Robert Zemeckis','2024-01-03',NULL);
-INSERT INTO tmp_videoclub (id_copia,fecha_alquiler_texto,dni,nombre,apellido_1,apellido_2,email,telefono,codigo_postal,fecha_nacimiento,numero,piso,letra,calle,ext,titulo,genero,sinopsis,director,fecha_alquiler,fecha_devolucion) VALUES
+insert into tmp_videoclub (id_copia,fecha_alquiler_texto,dni,nombre,apellido_1,apellido_2,email,telefono,codigo_postal,fecha_nacimiento,numero,piso,letra,calle,ext,titulo,genero,sinopsis,director,fecha_alquiler,fecha_devolucion) VALUES
 	 (208,'2024-01-20','4435315H','Lidia','Rubio','Benitez','lidia.rubio.benitez@gmail.com','621419327','47003','1993-09-12','91','2','Der.','Concepción Arenal','2Der.','Luces de la ciudad','Comedia','Un pobre vagabundo (Charles Chaplin) pasa mil y un avatares para conseguir dinero y ayudar a una pobre chica ciega (Virginia Cherill) de la que se ha enamorado.','Charlie Chaplin','2024-01-20',NULL),
 	 (298,'2024-01-21','8958239S','Juana','Peña','Sanz','juana.peña.sanz@gmail.com','618221724','47006','2001-07-12','28','2','Der.','Agustina de Aragón','2Der.','Guardianes de la Noche: Tren infinito','Acción','Tanjiro y sus compañeros se unen al Pilar de las Llamas Kyojuro Rengoku para investigar una misteriosa serie de desapariciones que han ocurrido dentro del “Tren Infinito”. Poco saben que Enmu, uno de los miembros de las Doce Lunas Demoníacas, también está a bordo y les ha preparado una trampa.','Haruo Sotozaki','2024-01-21',NULL),
 	 (300,'2024-01-18','2950461K','Maria rosa','Herrera','Nuñez','maria rosa.herrera.nuñez@gmail.com','674343471','47003','2003-07-24','76','3','D','Pablo Picasso','3D','Seishun Buta Yarou wa Yumemiru Shoujo no Yume wo Minai','Animación','En Fujisawa, donde los cielos son brillantes y los mares brillan, Sakuta Azusagawa está en su segundo año de secundaria. Sus días felices con su novia y estudiante de último año, Mai Sakurajima, se ven interrumpidos con la aparición de su primer amor, Shouko Makinohara. Por razones desconocidas, se encuentra con dos Shouko: una en la escuela secundaria y otra que se ha convertido en una adulta.  Cuando Sakuta se encuentra impotente viviendo con las dos Shouko, la versión adulta causa una gran grieta en su relación con Mai.  En medio de todo esto, descubre que la otra Shouko de escuela secundaria sufre de una enfermedad grave y su cicatriz comienza a latir ...','Souichi Masui','2024-01-18','2024-01-19'),
@@ -626,7 +662,7 @@ INSERT INTO tmp_videoclub (id_copia,fecha_alquiler_texto,dni,nombre,apellido_1,a
 /*
  * Change name and type column fecha_alqulir_texto too fecha_publicacion and create ramdom date
  */
-	
+
 alter table tmp_videoclub
 alter column fecha_alquiler_texto type text;
 
@@ -639,69 +675,73 @@ set fecha_publicacion  = to_char(
     'yyyy-mm-dd'
 );
 
+
 /*************************************
  * Inser dsts from tmp_videoclub table
  *************************************/
-insert into pelicula (id_copia, titulo, sinopsis)
-select distinct tv.id_copia, tv.titulo, tv.sinopsis from tmp_videoclub tv;
-
-
-insert into genero (id, genero)
-select distinct p.id, tv.genero
-from tmp_videoclub tv
-inner join pelicula p on tv.titulo = p.titulo;
-
-insert into director (id, director)
-select distinct p.id, tv.director
-from tmp_videoclub tv 
-inner join pelicula p on tv.titulo = p.titulo;
 
 insert into socio (nombre, apellidos, telefono, dni)
 select distinct tv.nombre, concat(tv.apellido_1, ' ', tv.apellido_2) apellidos, cast (tv.telefono as integer), tv.dni
 from tmp_videoclub tv;
 
-
-insert into direccion (id, cp, calle, numero, piso)
+insert into direccion (id_socio, cp, calle, numero, piso)
 select distinct s.id, tv.codigo_postal, tv.calle, tv.numero, tv.ext
 from tmp_videoclub tv
-inner join socio s on s.dni = tv.dni;
+join socio s on s.dni = tv.dni;
+
+
+insert into genero (genero)
+select distinct tv.genero
+from tmp_videoclub tv;
+
+insert into director (director)
+select distinct tv.director
+from tmp_videoclub tv ;
+
+
+insert into pelicula (titulo, sinopsis, director_id, genero_id, fecha)
+select distinct tv.titulo, tv.sinopsis, d.id, g.id, tv.fecha_publicacion from tmp_videoclub tv
+join genero g on g.genero = tv.genero
+join director d on d.director = tv.director
+ON CONFLICT (titulo, director_id, genero_id) DO NOTHING;
+
+
+
+insert into inventario (id_copia, pelicula_id)
+select distinct tv.id_copia, p.id from tmp_videoclub tv
+inner join pelicula p on tv.titulo = p.titulo;
+
 
 insert into prestamo (fecha_prestamo, fecha_devolucion, socio_id, copia_id)
 select distinct tv.fecha_alquiler, tv.fecha_devolucion, s.id, tv.id_copia
 from tmp_videoclub tv
 inner join socio s on s.dni = tv.dni;
 
-insert into inventario (copias, prestamo_id)
-select COUNT(CAST(tv.id_copia AS integer)), pres.id
-FROM tmp_videoclub tv 
-INNER JOIN prestamo pres ON pres.copia_id = tv.id_copia
-GROUP BY pres.id , pres.copia_id;
-
 /*
  * Query 1 -> Que películas están disponibles para alquilar en este momento (no están
 prestadas). Necesito el título y el número de copias disponibles
  */
 
-select distinct pel.id_copia, pel.titulo, (inv.copias - COUNT(CASE WHEN pr.fecha_devolucion IS NULL THEN 1 END)) as copias_disponibles, inv.copias as total_copias
-from prestamo pr
-inner join pelicula pel on pel.id_copia = pr.copia_id
-inner join inventario inv on inv.prestamo_id = pr.id
-group by pel.id_copia, pel.titulo, inv.copias;
+select p.titulo as titulo_pelicula, count(iv.id_copia) as copias_disponibles from pelicula p
+join inventario iv on p.id = iv.pelicula_id
+left join prestamo pres on iv.id_copia = pres.copia_id and pres.fecha_devolucion is null
+where pres.copia_id is null
+group by p.titulo;
+
 
 /*
 Query 2 -> Cual es el género favorito de cada uno de mis socios para poder recomendarle
 películas cuando venga. Necesito el número de socio, nombre y género favorito
 */
-
+-- drop table aux_genero;
 create table aux_genero as 
 select s.id as num_socio, concat(s.nombre, ' ', s.apellidos) as socio, p.copia_id, pel.titulo, g.genero
 from socio s
 inner join prestamo p on s.id = p.socio_id
-inner join pelicula pel on pel.id_copia = p.copia_id
-inner join genero g on pel.id = g.id
+inner join pelicula pel on pel.id = p.copia_id
+inner join genero g on pel.genero_id = g.id
 group by s.id, s.nombre, p.copia_id, pel.titulo, g.genero
 order by s.id;
-
 
 select num_socio, socio, genero
 from (
@@ -711,5 +751,5 @@ from (
 ) subquery
 where row_num = 1;
 
-
+  
 
